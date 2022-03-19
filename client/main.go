@@ -95,6 +95,8 @@ func (mc *mafiaClient) CmdPlayers() *[]string {
 }
 
 func main() {
+	flag.Parse()
+
 	log.Println("Client running...")
 	var client = mafiaClient{}
 

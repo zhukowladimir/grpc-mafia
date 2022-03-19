@@ -89,6 +89,8 @@ func (s *server) SessionHandler() {
 }
 
 func main() {
+	flag.Parse()
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
