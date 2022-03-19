@@ -5,11 +5,17 @@ option go_package = "github.com/zhukowladimir/grpc-mafia/pkg/proto/service";
 
 import "google/protobuf/empty.proto";
 
-service MafiaUsers {
+service Mafia {
     rpc SetUser(StringRequest) returns (ACK) {}
     rpc GetUsersList(google.protobuf.Empty) returns (UsersListResponse) {}
     rpc ListenNotifications(StringRequest) returns (stream Notification) {}
     rpc Disconnect(StringRequest) returns (google.protobuf.Empty) {}
+
+    rpc StartGame(StringRequest) returns (google.protobuf.Empty) {}
+    rpc LynchingVote(VoteRequest) returns (ACK) {}
+    rpc GoSleep(StringRequest) returns (google.protobuf.Empty) {}
+    rpc NightMurder(VoteRequest) returns (ACK) {}
+    rpc SneakPeek(VoteRequest) returns (ACK) {}
 }
 
 message StringRequest {
@@ -27,4 +33,9 @@ message UsersListResponse {
 
 message Notification {
     string msg = 1;
+}
+
+message VoteRequest {
+    string from = 1;
+    string to = 2;
 }

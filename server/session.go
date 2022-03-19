@@ -4,10 +4,12 @@ type Session struct {
 	name    string
 	id      uint64
 	players map[string]Player
+	ready   int
+	game    *Game
 }
 
 func createSession(name string, id uint64) *Session {
-	return &Session{name: name, id: id, players: make(map[string]Player)}
+	return &Session{name: name, id: id, players: make(map[string]Player), ready: 0, game: nil}
 }
 
 func (s *Session) IsValidUsername(username string) (bool, error) {
@@ -44,4 +46,13 @@ func (s *Session) GetPlayersList() []string {
 		i++
 	}
 	return list
+}
+
+func (s *Session) CreateGame() {
+	s.game = &Game{players: &s.players, isNight: false}
+}
+
+func (s *Session) StartGame() {
+	s.CreateGame()
+	s.game.StartPhase()
 }

@@ -21,7 +21,7 @@ var (
 )
 
 type mafiaClient struct {
-	service service.MafiaUsersClient
+	service service.MafiaClient
 	name    string
 }
 
@@ -106,7 +106,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	client.service = service.NewMafiaUsersClient(conn)
+	client.service = service.NewMafiaClient(conn)
 
 	reader := bufio.NewReader(os.Stdin)
 

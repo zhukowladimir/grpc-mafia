@@ -18,7 +18,7 @@ var (
 )
 
 type server struct {
-	service.UnimplementedMafiaUsersServer
+	service.UnimplementedMafiaServer
 
 	curSession Session
 	mutex      sync.Mutex
@@ -32,7 +32,7 @@ func (s *server) SetUser(_ context.Context, request *service.StringRequest) (*se
 	ack, err := s.curSession.IsValidUsername(name)
 	if ack {
 		s.curSession.NotifyPlayers(&Notification{ntype: NOTIFICATION_USER_JOIN, msg: name})
-		s.curSession.players[name] = Player{name: name, notificationStream: make(chan Notification, 10)}
+		s.curSession.players[name] = *CreatePlayer(name)
 	}
 	s.mutex.Unlock()
 
@@ -48,7 +48,7 @@ func (s *server) GetUsersList(_ context.Context, _ *emptypb.Empty) (*service.Use
 	return &service.UsersListResponse{List: s.curSession.GetPlayersList()}, nil
 }
 
-func (s *server) ListenNotifications(request *service.StringRequest, stream service.MafiaUsers_ListenNotificationsServer) error {
+func (s *server) ListenNotifications(request *service.StringRequest, stream service.Mafia_ListenNotificationsServer) error {
 	username := request.Msg
 	for {
 		msg, err := s.curSession.TakePlayerNotification(username)
@@ -62,10 +62,6 @@ func (s *server) ListenNotifications(request *service.StringRequest, stream serv
 			notificationMsg += "Player " + msg.msg + " joined!"
 		case NOTIFICATION_USER_LEAVE:
 			notificationMsg += "Player " + msg.msg + " leaved!"
-		case NOTIFICATION_SESSION_START:
-			notificationMsg += "Current session " + s.curSession.name + " started!"
-		case NOTIFICATION_SESSION_END:
-			notificationMsg += "Current session " + s.curSession.name + " ended!"
 		}
 		if err := stream.Send(&service.Notification{Msg: notificationMsg}); err != nil {
 			return err
@@ -84,8 +80,37 @@ func (s *server) Disconnect(_ context.Context, request *service.StringRequest) (
 	return out, nil
 }
 
-func (s *server) SessionHandler() {
-	s.curSession.NotifyPlayers(&Notification{ntype: NOTIFICATION_SESSION_START, msg: ""})
+func (s *server) StartGame(_ context.Context, request *service.StringRequest) (*emptypb.Empty, error) {
+	s.curSession.ready++
+
+	if s.curSession.ready == len(s.curSession.players) {
+		go s.curSession.StartGame()
+	}
+
+	out := new(emptypb.Empty)
+	return out, nil
+}
+
+func (s *server) LynchingVote(_ context.Context, vote *service.VoteRequest) (*service.ACK, error) {
+	if _, ok := s.curSession.game.vote[vote.To]; !ok {
+		s.curSession.game.vote[vote.To] = 0
+	}
+	s.curSession.game.vote[vote.To] += 1
+	return &service.ACK{Ack: true, Msg: ""}, nil
+}
+
+func (s *server) GoSleep(_ context.Context, request *service.StringRequest) (*emptypb.Empty, error) {
+	// TODO
+	out := new(emptypb.Empty)
+	return out, nil
+}
+
+func (s *server) NightMurder(_ context.Context, vote *service.VoteRequest) (*service.ACK, error) {
+	// TODO
+}
+
+func (s *server) SneakPeek(_ context.Context, vote *service.VoteRequest) (*service.ACK, error) {
+	// TODO
 }
 
 func main() {
@@ -99,11 +124,9 @@ func main() {
 	thisServer := server{curSession: *createSession("The only one server", 1)}
 
 	srv := grpc.NewServer()
-	service.RegisterMafiaUsersServer(srv, &thisServer)
+	service.RegisterMafiaServer(srv, &thisServer)
 
 	log.Printf("Server listening at %v\n", lis.Addr().String())
-
-	go thisServer.SessionHandler()
 
 	if err := srv.Serve(lis); err != nil {
 		log.Fatalln("gg")
