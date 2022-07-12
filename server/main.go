@@ -107,10 +107,12 @@ func (s *server) GoSleep(_ context.Context, request *service.StringRequest) (*em
 
 func (s *server) NightMurder(_ context.Context, vote *service.VoteRequest) (*service.ACK, error) {
 	// TODO
+	return nil, nil
 }
 
 func (s *server) SneakPeek(_ context.Context, vote *service.VoteRequest) (*service.ACK, error) {
 	// TODO
+	return nil, nil
 }
 
 func main() {
